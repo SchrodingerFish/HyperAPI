@@ -4,6 +4,7 @@ import os
 import dotenv
 from fastapi import APIRouter, Query, HTTPException
 from config import logger
+from model.response import Response
 from model.search_query import SearchQuery
 
 dotenv.load_dotenv()
@@ -34,6 +35,14 @@ async def search(query: SearchQuery, api_key: str = GOOGLE_SERPER_API_KEY):
         data = res.read()
         decoded_data = data.decode("utf-8")
         conn.close()
-        return json.loads(decoded_data)
+        organic_data= json.loads(decoded_data).get("organic", [])
+        return Response.success(
+            data=organic_data
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error during API call: {str(e)}")
+        logger.error(f"Error during API call: {str(e)}")
+        return Response.error(
+            code=500,
+            message=f"Error during API call: {str(e)}",
+            data=None
+        )
